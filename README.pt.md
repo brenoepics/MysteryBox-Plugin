@@ -2,6 +2,8 @@
 
 Este plugin adiciona a Caixa Misteriosa de Natal ao Arcturus Morningstar 3.5.x.
 
+![preview.png](preview.png)
+
 > [!TIP]
 > Versão em Inglês [aqui](README.md)
 

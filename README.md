@@ -2,6 +2,8 @@
 
 This plugin adds the Xmas Mystery Box feature to Arcturus Morningstar 3.5.x.
 
+![preview.png](preview.png)
+
 > [!TIP]
 > Portuguese version [here](README.pt.md)
 
