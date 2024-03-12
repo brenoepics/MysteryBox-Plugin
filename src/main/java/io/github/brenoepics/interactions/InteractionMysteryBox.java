@@ -15,7 +15,6 @@ import io.github.brenoepics.core.types.MysteryItem;
 import io.github.brenoepics.core.types.MysteryState;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import org.jetbrains.annotations.Nullable;
 
 public class InteractionMysteryBox extends InteractionDefault {
   public InteractionMysteryBox(ResultSet set, Item baseItem) throws SQLException {
@@ -83,7 +82,10 @@ public class InteractionMysteryBox extends InteractionDefault {
     Habbo habbo = client.getHabbo();
 
     CheckResult result = canTrade(client, room, owner, habbo);
-    if (result == null) return;
+    if (result == null) {
+      this.updateData(room);
+      return;
+    }
 
     if (Main.getMysteryManager().startTrade(result.userKey, result.item)) {
       client.sendResponse(new ShowWaitMessageComposer());
@@ -91,7 +93,6 @@ public class InteractionMysteryBox extends InteractionDefault {
     }
   }
 
-  @Nullable
   private CheckResult canTrade(GameClient client, Room room, Habbo owner, Habbo habbo) {
     // Cannot trade if the owner is offline
     if (owner == null || habbo == null) return null;

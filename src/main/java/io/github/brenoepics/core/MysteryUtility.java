@@ -140,16 +140,16 @@ public class MysteryUtility {
         final PreparedStatement statement =
             connection.prepareStatement(
                 "INSERT INTO `users_mystery_keys` (`user_id`, `color`, `state`) VALUES (?, ?, ?)",
-                    Statement.RETURN_GENERATED_KEYS)) {
+                Statement.RETURN_GENERATED_KEYS)) {
       statement.setInt(1, userId);
-      statement.setString(2, color.getName());
+      statement.setString(2, color.name());
       statement.setString(3, MysteryState.WAITING.name());
       statement.execute();
 
       try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
         if (generatedKeys.next()) {
           return new MysteryItem(
-                  generatedKeys.getInt(1), color, MysteryState.WAITING, userId, null);
+              generatedKeys.getInt(1), color, MysteryState.WAITING, userId, null);
         } else {
           Main.LOGGER.error("Creating MysteryBox failed, no ID found.");
           return null;
@@ -160,5 +160,40 @@ public class MysteryUtility {
     }
 
     return null;
+  }
+
+  public static boolean habboIsValid(Habbo habbo) {
+    return habbo != null
+        && habbo.getHabboInfo() != null
+        && habbo.getHabboInfo().getCurrentRoom() != null;
+  }
+
+  public static int checkLastKeyGen(int userId) {
+    try (final Connection connection = Emulator.getDatabase().getDataSource().getConnection();
+        final PreparedStatement statement =
+            connection.prepareStatement(
+                "SELECT `last_mystery_key` FROM `users` WHERE `id` = ? LIMIT 1")) {
+      statement.setInt(1, userId);
+      final ResultSet set = statement.executeQuery();
+      if (set.next()) {
+        return set.getInt("last_mystery_key");
+      }
+    } catch (Exception e) {
+      Main.LOGGER.error("[Mystery-Manager]", e);
+    }
+    return 0;
+  }
+
+  public static void updateLastKeyGen(int userId) {
+    try (final Connection connection = Emulator.getDatabase().getDataSource().getConnection();
+        final PreparedStatement statement =
+            connection.prepareStatement(
+                "UPDATE `users` SET `last_mystery_key` = ? WHERE `id` = ?")) {
+      statement.setInt(1, Emulator.getIntUnixTimestamp());
+      statement.setInt(2, userId);
+      statement.execute();
+    } catch (Exception e) {
+      Main.LOGGER.error("[Mystery-Manager]", e);
+    }
   }
 }

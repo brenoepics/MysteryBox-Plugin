@@ -9,7 +9,7 @@ public class MysteryReward {
 
   public MysteryReward(ResultSet set) throws Exception {
     this.id = set.getInt("id");
-    this.type = ProductTypeEnum.valueOf(set.getString("type").toUpperCase());
+    this.type = ProductTypeEnum.fromChar(set.getString("type").toUpperCase());
     this.reward = set.getInt("reward");
   }
 

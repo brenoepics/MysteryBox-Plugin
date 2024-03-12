@@ -38,3 +38,9 @@ CREATE TABLE IF NOT EXISTS `users_mystery_keys` (
   UNIQUE KEY `id` (`id`),
   UNIQUE KEY `user` (`user_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=armscii8 COLLATE=armscii8_bin;
+
+ALTER TABLE `users`
+    ADD COLUMN `last_mystery_key` INT(30) NOT NULL DEFAULT '0';
+
+ALTER TABLE `permissions`
+    ADD COLUMN `cmd_mystery_update`  enum('1','0') NOT NULL DEFAULT '0';

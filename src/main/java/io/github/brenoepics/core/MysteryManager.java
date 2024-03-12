@@ -66,6 +66,13 @@ public class MysteryManager {
     return box.orElse(null);
   }
 
+  public Map.Entry<MysteryItem, Integer> getTradeByKeyOwner(final int ownerId) {
+    return this.trade.entrySet().stream()
+        .filter(trading -> trading.getValue() == ownerId)
+        .findFirst()
+        .orElse(null);
+  }
+
   public MysteryItem getTradingBoxByUserId(final int boxOwnerId, final int keyUserId) {
     return this.trade.entrySet().stream()
         .filter(mysteryItem -> findTrade(boxOwnerId, keyUserId, mysteryItem))
@@ -77,6 +84,10 @@ public class MysteryManager {
   private static boolean findTrade(
       int boxOwnerId, int keyUserId, Map.Entry<MysteryItem, Integer> mysteryItem) {
     return mysteryItem.getKey().getOwnerId() == boxOwnerId && mysteryItem.getValue() == keyUserId;
+  }
+
+  public boolean isTrading(final int keyOwner) {
+    return this.trade.containsValue(keyOwner);
   }
 
   public boolean areTrading(final int keyOwner, final int boxOwner) {
@@ -153,6 +164,22 @@ public class MysteryManager {
     return true;
   }
 
+  public void cancelTrade(int keyOwner) {
+    if (!this.keys.containsKey(keyOwner)) return;
+    Map.Entry<MysteryItem, Integer> entry = getTradeByKeyOwner(keyOwner);
+    if (entry == null) return;
+
+    MysteryItem box = entry.getKey();
+    MysteryItem key = this.getKey(keyOwner);
+    key.setState(MysteryState.WAITING);
+    box.setState(MysteryState.WAITING);
+
+    Habbo habbo = Emulator.getGameEnvironment().getHabboManager().getHabbo(box.getOwnerId());
+    if (!habboIsValid(habbo) || !updateItem(habbo.getHabboInfo().getCurrentRoom(), box)) {
+      this.removeTrade(box.getItemId());
+    }
+  }
+
   public void cancelTrade(Habbo habbo, Integer boxOwnerId) {
     if (!this.areTrading(habbo.getHabboInfo().getId(), boxOwnerId)) return;
     Room room = habbo.getRoomUnit().getRoom();
@@ -165,23 +192,41 @@ public class MysteryManager {
     key.setState(MysteryState.WAITING);
     box.setState(MysteryState.WAITING);
 
+    if (!updateItem(room, box)) {
+      this.removeTrade(box.getItemId());
+    }
+  }
+
+  private boolean updateItem(Room room, MysteryItem box) {
     HabboItem item = room.getHabboItem(box.getItemId());
     if (item == null) {
-      return;
+      return false;
     }
     ((InteractionMysteryBox) item).updateData(room);
     this.removeTrade(box.getItemId());
+    return true;
   }
 
   public boolean endTrade(MysteryItem box) {
     if (!this.trade.containsKey(box)) return false;
 
     MysteryItem key = this.getKey(this.trade.get(box));
-    if (key == null || !key.getState().equals(MysteryState.TRADING)) return false;
+    if (key == null || !key.getState().equals(MysteryState.TRADING)) {
+      box.setState(MysteryState.WAITING);
+      return false;
+    }
 
     Habbo habbo = Emulator.getGameEnvironment().getHabboManager().getHabbo(key.getOwnerId());
     Habbo boxOwner = Emulator.getGameEnvironment().getHabboManager().getHabbo(box.getOwnerId());
-    if (habbo == null || boxOwner == null) return false;
+    if (habbo == null || boxOwner == null) {
+      box.setState(MysteryState.WAITING);
+      key.setState(MysteryState.WAITING);
+      return false;
+    }
+    if (!habbo.getHabboInfo().getCurrentRoom().equals(boxOwner.getHabboInfo().getCurrentRoom())) {
+      this.cancelTrade(habbo, boxOwner.getHabboInfo().getId());
+      return false;
+    }
 
     habbo.getClient().sendResponse(new CancelWaitComposer());
     this.closeBox(box.getItemId());
