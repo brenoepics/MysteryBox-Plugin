@@ -25,7 +25,7 @@ object MysteryUtility {
             return mysteryColor2[color]
         }
 
-    fun getValidColors(colors: Array<MysteryColor>): List<MysteryColor> {
+    private fun getValidColors(colors: Array<MysteryColor>): List<MysteryColor> {
         return Arrays.stream(colors).filter { obj: MysteryColor -> isValidColor(obj) }
             .collect(Collectors.toCollection { ArrayList() })
     }
@@ -51,7 +51,7 @@ object MysteryUtility {
         }
     }
 
-    fun giveHabboItem(habbo: Habbo, itemId: Int) {
+    private fun giveHabboItem(habbo: Habbo, itemId: Int) {
         val rewardItem = Emulator.getGameEnvironment().itemManager.getItem(itemId)
         if (rewardItem == null) {
             Main.LOGGER.error("Could not find item with id {}", itemId)

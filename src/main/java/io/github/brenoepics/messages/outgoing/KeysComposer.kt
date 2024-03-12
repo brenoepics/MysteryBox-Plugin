@@ -9,8 +9,8 @@ class KeysComposer(private val boxColor: MysteryColor, private val boxKey: Myste
     override fun composeInternal(): ServerMessage {
         response.init(Outgoing.MYSTERY_BOX_KEYS_MESSAGE_COMPOSER)
 
-        response.appendString(boxColor.name)
-        response.appendString(boxKey.name)
+        response.appendString(boxColor.code)
+        response.appendString(boxKey.code)
         return this.response
     }
 }
