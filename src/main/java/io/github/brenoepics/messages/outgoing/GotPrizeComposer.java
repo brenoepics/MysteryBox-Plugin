@@ -1,22 +1,22 @@
-package com.brenoepic.core.messages.outgoing;
+package io.github.brenoepics.messages.outgoing;
 
-import com.brenoepic.core.types.Colors;
-import com.brenoepic.core.types.ProductTypeEnum;
+import io.github.brenoepics.core.types.ProductTypeEnum;
 import com.eu.habbo.messages.ServerMessage;
 import com.eu.habbo.messages.outgoing.MessageComposer;
+import io.github.brenoepics.messages.Outgoing;
 
-public class GotMysteryBoxPrizeMessageComposer extends MessageComposer {
+public class GotPrizeComposer extends MessageComposer {
     private final ProductTypeEnum contentType;
     private final Integer classId;
 
-    public GotMysteryBoxPrizeMessageComposer(ProductTypeEnum contentType, Integer classId) {
+    public GotPrizeComposer(ProductTypeEnum contentType, Integer classId) {
         this.contentType = contentType;
         this.classId = classId;
     }
 
     @Override
     protected ServerMessage composeInternal() {
-        this.response.init(Outgoing.gotMysteryBoxPrizeMessageComposer);
+        this.response.init(Outgoing.GOT_MYSTERY_BOX_PRIZE_MESSAGE_COMPOSER);
 
         this.response.appendString(this.contentType.getType());
         this.response.appendInt(this.classId);
