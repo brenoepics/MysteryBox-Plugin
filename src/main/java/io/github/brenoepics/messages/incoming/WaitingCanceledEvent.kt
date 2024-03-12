@@ -10,9 +10,9 @@ class WaitingCanceledEvent : MessageHandler() {
         val boxOwnerId = packet.readInt()
         val habbo = client.habbo ?: return
 
-        val item: MysteryItem = Main.getMysteryManager().getKey(habbo.habboInfo.id)
+        val item: MysteryItem = Main.mysteryManager.getKey(habbo.habboInfo.id)!!
 
-        if (item == null || item.state != MysteryState.TRADING) return
-        Main.getMysteryManager().cancelTrade(habbo, boxOwnerId)
+        if (item.state != MysteryState.TRADING) return
+        Main.mysteryManager.cancelTrade(habbo, boxOwnerId)
     }
 }

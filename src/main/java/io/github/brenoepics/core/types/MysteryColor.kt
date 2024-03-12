@@ -2,7 +2,7 @@ package io.github.brenoepics.core.types
 
 enum class MysteryColor(
     val id: Int,
-    override val name: String,
+    val code: String,
     val waitingState: Int,
     val tradingState: Int,
     val tradedState: Int

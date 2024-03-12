@@ -15,19 +15,18 @@ import io.github.brenoepics.messages.outgoing.CancelWaitComposer
 import io.github.brenoepics.messages.outgoing.GotPrizeComposer
 import io.github.brenoepics.messages.outgoing.KeysComposer
 import java.sql.SQLException
-import java.util.function.Function
 
 class MysteryManager {
-    private val keys: THashMap<Int?, MysteryItem?>? = MysteryUtility.loadMysteryItem("users_mystery_keys", "user_id")
-    private val boxes: THashMap<Int?, MysteryItem?>? = MysteryUtility.loadMysteryItem("mystery_boxes", "item_id")
-    private val trade = THashMap<MysteryItem, Int?>()
+    private val keys: THashMap<Int, MysteryItem> = MysteryUtility.loadMysteryItem("users_mystery_keys", "user_id")
+    private val boxes: THashMap<Int, MysteryItem> = MysteryUtility.loadMysteryItem("mystery_boxes", "item_id")
+    private val trade = THashMap<MysteryItem, Int>()
     private val rewards: MutableList<MysteryReward> = ArrayList()
 
     init {
         loadRewards()
         Main.LOGGER.info(
             "[Mystery-Manager] Loaded {} keys and {} rewards successfully!",
-            keys.size(),
+            keys.size,
             rewards.size
         )
     }
@@ -50,17 +49,17 @@ class MysteryManager {
     }
 
     fun getKey(userId: Int): MysteryItem? {
-        return keys!![userId]
+        return keys[userId]
     }
 
     fun getBox(itemId: Int): MysteryItem? {
-        return boxes!![itemId]
+        return boxes[itemId]
     }
 
     fun getBoxByUserId(userId: Int): MysteryItem? {
         val box =
-            boxes!!.values.stream()
-                .filter { mysteryItem: MysteryItem? -> mysteryItem.getOwnerId() == userId }
+            boxes.values.stream()
+                .filter { mysteryItem: MysteryItem? -> mysteryItem!!.ownerId == userId }
                 .findFirst()
         return box.orElse(null)
     }
@@ -75,7 +74,7 @@ class MysteryManager {
     fun getTradingBoxByUserId(boxOwnerId: Int, keyUserId: Int): MysteryItem? {
         return trade.entries.stream()
             .filter { mysteryItem: Map.Entry<MysteryItem, Int?> -> findTrade(boxOwnerId, keyUserId, mysteryItem) }
-            .map<MysteryItem?>(Function<Map.Entry<MysteryItem, Int?>, MysteryItem?> { java.util.Map.Entry.key })
+            .map { obj: Map.Entry<MysteryItem, Int?> -> obj.key }
             .findFirst()
             .orElse(null)
     }
@@ -90,22 +89,22 @@ class MysteryManager {
     }
 
     fun generateBoxColor(itemId: Int, userId: Int): MysteryItem? {
-        if (boxes!!.containsKey(itemId)) {
+        if (boxes.containsKey(itemId)) {
             return boxes[itemId]
         }
 
-        val newBox = MysteryUtility.createBox(itemId, userId, MysteryUtility.getRandomColor()) ?: return null
+        val newBox = MysteryUtility.createBox(itemId, userId, MysteryUtility.randomColor) ?: return null
 
         boxes[itemId] = newBox
         return newBox
     }
 
     fun createKey(userId: Int) {
-        if (keys!!.containsKey(userId)) {
+        if (keys.containsKey(userId)) {
             return
         }
 
-        val newKey = MysteryUtility.createKey(userId, MysteryUtility.getRandomColor()) ?: return
+        val newKey = MysteryUtility.createKey(userId, MysteryUtility.randomColor) ?: return
 
         keys[userId] = newKey
     }
@@ -115,7 +114,7 @@ class MysteryManager {
     }
 
     fun deleteKey(userId: Int) {
-        if (!keys!!.containsKey(userId)) {
+        if (!keys.containsKey(userId)) {
             return
         }
 
@@ -133,10 +132,14 @@ class MysteryManager {
     }
 
     fun closeBox(itemId: Int) {
-        if (!boxes!!.containsKey(itemId)) {
+        if (!boxes.containsKey(itemId)) {
             return
         }
-        boxes[itemId].setState(MysteryState.TRADED)
+        val box = boxes[itemId]
+
+        if (box != null) {
+            box.state = (MysteryState.TRADED)
+        }
 
         try {
             Emulator.getDatabase().dataSource.connection.use { connection ->
@@ -163,17 +166,17 @@ class MysteryManager {
     }
 
     fun cancelTrade(keyOwner: Int) {
-        if (!keys!!.containsKey(keyOwner)) return
-        val entry = getTradeByKeyOwner(keyOwner) ?: return
+        if (!keys.containsKey(keyOwner)) return
+        val entry = getTradeByKeyOwner(keyOwner)
 
         val box = entry.key
         val key = this.getKey(keyOwner)
-        key.setState(MysteryState.WAITING)
+        key!!.state = MysteryState.WAITING
         box.state = MysteryState.WAITING
 
         val habbo = Emulator.getGameEnvironment().habboManager.getHabbo(box.ownerId)
         if (!MysteryUtility.habboIsValid(habbo) || !updateItem(habbo.habboInfo.currentRoom, box)) {
-            this.removeTrade(box.itemId)
+            box.itemId?.let { this.removeTrade(it) }
         }
     }
 
@@ -189,21 +192,21 @@ class MysteryManager {
         box.state = MysteryState.WAITING
 
         if (!updateItem(room, box)) {
-            this.removeTrade(box.itemId)
+            box.itemId?.let { this.removeTrade(it) }
         }
     }
 
     private fun updateItem(room: Room, box: MysteryItem): Boolean {
-        val item = room.getHabboItem(box.itemId) ?: return false
+        val item = box.itemId?.let { room.getHabboItem(it) } ?: return false
         (item as InteractionMysteryBox).updateData(room)
-        this.removeTrade(box.itemId)
+        this.removeTrade(box.itemId!!)
         return true
     }
 
     fun endTrade(box: MysteryItem): Boolean {
         if (!trade.containsKey(box)) return false
 
-        val key = this.getKey(trade[box]!!)
+        val key = trade[box]?.let { this.getKey(it) }
         if (key == null || key.state != MysteryState.TRADING) {
             box.state = MysteryState.WAITING
             return false
@@ -222,10 +225,10 @@ class MysteryManager {
         }
 
         habbo.client.sendResponse(CancelWaitComposer())
-        this.closeBox(box.itemId)
+        box.itemId?.let { this.closeBox(it) }
         this.deleteKey(key.ownerId)
         this.giveReward(box, key.ownerId, boxOwner)
-        this.removeTrade(box.itemId)
+        box.itemId?.let { this.removeTrade(it) }
         updateChallenge(habbo)
         updateChallenge(boxOwner)
         return true
@@ -236,12 +239,12 @@ class MysteryManager {
                     || getRewards().isEmpty()) || habbo == null
         ) return
 
-        val reward = this.randReward ?: return
+        val reward = this.randReward
 
         MysteryUtility.switchReward(habbo, reward)
         MysteryUtility.log(box, keyOwner, reward.id)
 
-        val composer: MessageComposer = GotPrizeComposer(reward.type, reward.reward)
+        val composer: MessageComposer = GotPrizeComposer(reward.type!!, reward.reward)
         habbo.client.sendResponse(composer)
     }
 
@@ -274,7 +277,7 @@ class MysteryManager {
     }
 
     fun dispose() {
-        keys!!.clear()
+        keys.clear()
         rewards.clear()
     }
 

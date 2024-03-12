@@ -5,7 +5,7 @@ import io.github.brenoepics.Main
 /**
  * WALL class is wallId FLOOR class is floorId BADGE class is badgeId HABBO_CLUB class is ignored
  * EFFECT class is effectId GAME_TOKEN class is not implemented on ms PET class is petId ROBOT class
- * is robotId
+ *  robotId
  */
 enum class ProductTypeEnum(val type: String) {
     WALL("i"), FLOOR("s"), EFFECT("e"), HABBO_CLUB("h"), BADGE("b"), GAME_TOKEN("GAME_TOKEN"), PET("p"), ROBOT("r");

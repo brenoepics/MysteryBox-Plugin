@@ -13,29 +13,24 @@ import io.github.brenoepics.core.types.*
 import java.sql.SQLException
 import java.sql.Statement
 import java.util.*
-import java.util.function.Supplier
 import java.util.stream.Collectors
 
 object MysteryUtility {
     val randomColor: MysteryColor
         get() {
-            val colors: Array<MysteryColor?> = MysteryColor.entries.toTypedArray()
+            val colors: Array<MysteryColor> = MysteryColor.entries.toTypedArray()
             val mysteryColor2 = getValidColors(colors)
             val color = Emulator.getRandom().nextInt(mysteryColor2.size)
 
             return mysteryColor2[color]
         }
 
-    fun getValidColors(colors: Array<MysteryColor?>?): List<MysteryColor> {
-        return Arrays.stream(colors)
-            .filter { obj: MysteryColor? -> isValidColor() }
-            .collect(
-                Collectors.toCollection(
-                    Supplier { ArrayList() })
-            )
+    fun getValidColors(colors: Array<MysteryColor>): List<MysteryColor> {
+        return Arrays.stream(colors).filter { obj: MysteryColor -> isValidColor(obj) }
+            .collect(Collectors.toCollection { ArrayList() })
     }
 
-    fun isValidColor(color: MysteryColor): Boolean {
+    private fun isValidColor(color: MysteryColor): Boolean {
         return color != MysteryColor.NONE
     }
 
@@ -47,6 +42,12 @@ object MysteryUtility {
                 val duration = reward.reward * 86400
                 habbo.habboStats.createSubscription(Subscription.HABBO_CLUB, duration)
             }
+
+            ProductTypeEnum.BADGE -> TODO()
+            ProductTypeEnum.GAME_TOKEN -> TODO()
+            ProductTypeEnum.PET -> TODO()
+            ProductTypeEnum.ROBOT -> TODO()
+            null -> TODO()
         }
     }
 
@@ -58,11 +59,9 @@ object MysteryUtility {
         }
 
         val newItem = createItem(habbo.habboInfo.id, rewardItem)
-        if (newItem != null) {
-            habbo.inventory.itemsComponent.addItem(newItem)
-            habbo.client.sendResponse(AddHabboItemComposer(newItem))
-            habbo.client.sendResponse(InventoryRefreshComposer())
-        }
+        habbo.inventory.itemsComponent.addItem(newItem)
+        habbo.client.sendResponse(AddHabboItemComposer(newItem))
+        habbo.client.sendResponse(InventoryRefreshComposer())
     }
 
     fun createItem(ownerId: Int, rewardItem: Item?): HabboItem {
@@ -96,7 +95,7 @@ object MysteryUtility {
                 connection.prepareStatement(
                     "INSERT INTO `mystery_items_log` (`item_id`, `box_id`, `box_owner`, `key_owner`, `reward_id`, `timestamp`) VALUES (?, ?, ?, ?, ?, ?)"
                 ).use { statement ->
-                    statement.setInt(1, box.itemId)
+                    box.itemId?.let { statement.setInt(1, it) }
                     statement.setInt(2, box.id)
                     statement.setInt(3, box.ownerId)
                     statement.setInt(4, keyOwner)
@@ -122,13 +121,13 @@ object MysteryUtility {
                     statement.setString(3, color!!.name)
                     statement.execute()
                     statement.generatedKeys.use { generatedKeys ->
-                        if (generatedKeys.next()) {
-                            return MysteryItem(
+                        return if (generatedKeys.next()) {
+                            MysteryItem(
                                 generatedKeys.getInt(1), color, MysteryState.WAITING, userId, itemId
                             )
                         } else {
                             Main.LOGGER.error("Creating MysteryBox failed, no ID found.")
-                            return null
+                             null
                         }
                     }
                 }
@@ -151,8 +150,8 @@ object MysteryUtility {
                     statement.setString(3, MysteryState.WAITING.name)
                     statement.execute()
                     statement.generatedKeys.use { generatedKeys ->
-                        if (generatedKeys.next()) {
-                            return MysteryItem(
+                        return if (generatedKeys.next()) {
+                            MysteryItem(
                                 generatedKeys.getInt(1), color, MysteryState.WAITING, userId, null
                             )
                         } else {

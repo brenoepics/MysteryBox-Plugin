@@ -19,12 +19,7 @@ class InteractionMysteryBox : InteractionDefault {
     constructor(set: ResultSet?, baseItem: Item?) : super(set, baseItem)
 
     constructor(id: Int, userId: Int, item: Item?, extra: String?, limitedStack: Int, limitedSells: Int) : super(
-        id,
-        userId,
-        item,
-        extra,
-        limitedStack,
-        limitedSells
+        id, userId, item, extra, limitedStack, limitedSells
     )
 
     override fun isWalkable(): Boolean {
@@ -48,25 +43,20 @@ class InteractionMysteryBox : InteractionDefault {
         if (isValidBox(room)) return
         val owner = room.getHabbo(this.userId)
 
-        val box: MysteryItem = Main.getMysteryManager().generateBoxColor(this.id, this.userId)
-        val userKey: MysteryItem = Main.getMysteryManager().getKey(this.userId)
-        if (box == null) {
-            room.pickUpItem(this, owner)
-            return
-        }
+        val box: MysteryItem = Main.mysteryManager.generateBoxColor(this.id, this.userId)!!
+        val userKey: MysteryItem = Main.mysteryManager.getKey(this.userId)!!
 
-        val composer: MessageComposer =
-            KeysComposer(box.color, getBoxKey(userKey))
+        val composer: MessageComposer = KeysComposer(box.color!!, getBoxKey(userKey)!!)
         owner.client.sendResponse(composer)
         this.updateData(room)
     }
 
     private fun isValidBox(room: Room?): Boolean {
-        return room?.getHabbo(this.userId) == null || Main.getMysteryManager().getBox(this.id) != null
+        return room?.getHabbo(this.userId) == null || Main.mysteryManager.getBox(this.id) != null
     }
 
     override fun onClick(client: GameClient, room: Room, objects: Array<Any>) {
-        if (room?.getHabbo(this.userId) == null) return
+        if (room.getHabbo(this.userId) == null) return
         val owner = room.getHabbo(this.userId)
         val habbo = client.habbo
 
@@ -76,7 +66,7 @@ class InteractionMysteryBox : InteractionDefault {
             return
         }
 
-        if (Main.getMysteryManager().startTrade(result.userKey, result.item)) {
+        if (Main.mysteryManager.startTrade(result.userKey, result.item)) {
             client.sendResponse(ShowWaitMessageComposer())
             this.updateData(room)
         }
@@ -93,7 +83,7 @@ class InteractionMysteryBox : InteractionDefault {
             return null
         }
 
-        val userKey: MysteryItem = Main.getMysteryManager().getKey(habbo.habboInfo.id)
+        val userKey: MysteryItem = Main.mysteryManager.getKey(habbo.habboInfo.id)!!
         if (notReady(userKey, item)) return null
 
         if (isBeingTraded(item, userKey)) return null
@@ -107,12 +97,12 @@ class InteractionMysteryBox : InteractionDefault {
     }
 
     fun getMysteryItem(room: Room?): MysteryItem? {
-        if (Main.getMysteryManager().getBox(this.id) == null) {
+        if (Main.mysteryManager.getBox(this.id) == null) {
             handleNullBox(room)
             return null
         }
 
-        return Main.getMysteryManager().getBox(this.id)
+        return Main.mysteryManager.getBox(this.id)
     }
 
     private fun handleNullBox(room: Room?) {
@@ -132,14 +122,14 @@ class InteractionMysteryBox : InteractionDefault {
 
     private fun setExtraData(item: MysteryItem) {
         when (item.state) {
-            MysteryState.WAITING -> this.extradata = item.color.waitingState.toString()
-            MysteryState.TRADING -> this.extradata = item.color.tradingState.toString()
-            MysteryState.TRADED -> this.extradata = item.color.tradedState.toString()
+            MysteryState.WAITING -> this.extradata = item.color!!.waitingState.toString()
+            MysteryState.TRADING -> this.extradata = item.color!!.tradingState.toString()
+            MysteryState.TRADED -> this.extradata = item.color!!.tradedState.toString()
         }
     }
 
     companion object {
-        private fun getBoxKey(userKey: MysteryItem?): MysteryColor {
+        private fun getBoxKey(userKey: MysteryItem?): MysteryColor? {
             return if (userKey == null) MysteryColor.NONE else userKey.color
         }
 
@@ -148,8 +138,9 @@ class InteractionMysteryBox : InteractionDefault {
         }
 
         private fun isOwner(client: GameClient, owner: Habbo, item: MysteryItem): Boolean {
-            return client.habbo.habboInfo.id == owner.habboInfo.id && item.state == MysteryState.TRADING && Main.getMysteryManager()
-                .endTrade(item)
+            return client.habbo.habboInfo.id == owner.habboInfo.id && item.state == MysteryState.TRADING && Main.mysteryManager.endTrade(
+                    item
+                )
         }
     }
 }

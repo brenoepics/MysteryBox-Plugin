@@ -21,6 +21,7 @@ import io.github.brenoepics.messages.incoming.WaitingCanceledEvent
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+@Suppress("unused", "UNUSED_PARAMETER")
 class Main : HabboPlugin(), EventListener {
     override fun onEnable() {
         Emulator.getPluginManager().registerEvents(this, this)
@@ -40,8 +41,7 @@ class Main : HabboPlugin(), EventListener {
     fun onEmulatorLoaded(event: EmulatorLoadedEvent?) {
         // register incoming message
         Emulator.getGameServer().packetManager.registerHandler(
-            Incoming.MYSTERY_BOX_WAITING_CANCELED_MESSAGE_COMPOSER,
-            WaitingCanceledEvent::class.java
+            Incoming.MYSTERY_BOX_WAITING_CANCELED_MESSAGE_COMPOSER, WaitingCanceledEvent::class.java
         )
 
         Emulator.getConfig().register("mysterybox.challenge.enabled", "1")
@@ -51,12 +51,9 @@ class Main : HabboPlugin(), EventListener {
         Emulator.getTexts().register("cmd_mystery_update.updated", "Rewards updated successfully!")
         Emulator.getTexts().register("cmd_mystery_update.keys", "mysterybox_update")
 
-        CommandHandler.addCommand(
-            UpdateRewardsCommand(
-                "cmd_mystery_update",
-                Emulator.getTexts().getValue("cmd_mystery_update.keys").split(";".toRegex())
-                    .dropLastWhile { it.isEmpty() }
-                    .toTypedArray()))
+        CommandHandler.addCommand(UpdateRewardsCommand("cmd_mystery_update",
+            Emulator.getTexts().getValue("cmd_mystery_update.keys").split(";".toRegex()).dropLastWhile { it.isEmpty() }
+                .toTypedArray()))
         LOGGER.info("[MysteryBox Plugin] was successfully Loaded!")
     }
 
@@ -94,15 +91,14 @@ class Main : HabboPlugin(), EventListener {
     fun onLoadItemsManager(e: EmulatorLoadItemsManagerEvent?) {
         Emulator.getGameEnvironment().itemManager.addItemInteraction(
             ItemInteraction(
-                "mysterybox",
-                InteractionMysteryBox::class.java
+                "mysterybox", InteractionMysteryBox::class.java
             )
         )
     }
 
     companion object {
         @JvmField
-				val LOGGER: Logger = LoggerFactory.getLogger(Main::class.java)
+        val LOGGER: Logger = LoggerFactory.getLogger(Main::class.java)
         val mysteryManager: MysteryManager = MysteryManager()
 
         @JvmStatic
