@@ -6,9 +6,9 @@ import com.eu.habbo.habbohotel.gameclients.GameClient
 import io.github.brenoepics.Main
 
 class UpdateRewardsCommand(permission: String?, keys: Array<String?>?) : Command(permission, keys) {
-    override fun handle(gameClient: GameClient, strings: Array<String>): Boolean {
+    override fun handle(gameClient: GameClient, args: Array<String>): Boolean {
         Main.mysteryManager.loadRewards()
         gameClient.habbo.whisper(Emulator.getTexts().getValue("cmd_mystery_update.updated"))
-        return false
+        return true
     }
 }
